@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES6",                // Set to ES6 or higher
+    "module": "ESNext",             // Use ES modules
+    "moduleResolution": "node",     // Resolve modules like Node.js does
+    "esModuleInterop": true,        // For compatibility with ES6 imports
+    "strict": true,                 // Enables strict mode for better type safety
+    "outDir": "./dist",             // Output folder for compiled JS (optional)
+    "rootDir": ".",                 // Root directory of your source code
+    "resolveJsonModule": true,      // Allow importing JSON files (optional)
+    "removeComments": true          // Remove comments from compiled output
+  },
+  "include": [
+    "server.ts",                    // Include server.ts (entry file) explicitly
+    "src/**/*"                      // Include all files in src directory (optional)
+  ],
+  "exclude": [
+    "node_modules"                  // Exclude node_modules
+  ]
+}
