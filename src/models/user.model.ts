@@ -106,10 +106,10 @@ const userSchema = new Schema<IUser>({
 //
 userSchema.pre('save', async function (next) {
   if(this.userName){
-    this.userName = this.userName.toLowerCase().trim().replace(/\s/g, '');
+    (this as IUser).userName = this.userName.toLowerCase().trim().replace(/\s/g, '');
   }
   if(this.isModified('password')){
-    this.password = await bcrypt.hash(this.password, 10);
+    (this as IUser).password = await bcrypt.hash(this.password, 10);
   }
   next();
 });
@@ -131,15 +131,15 @@ userSchema.methods.generateRefrshToken = function (): string {
 
 userSchema.methods.generateEmailVerificationToken = function (): string {
   const token = crypto.randomBytes(20).toString('hex');
-  this.emailVerificationToken = crypto.createHash('sha256').update(token).digest('hex');
-  this.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  (this as IUser).emailVerificationToken = crypto.createHash('sha256').update(token).digest('hex');
+  (this as IUser).emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
   return token;
 }
 
 userSchema.methods.generateResetPasswordToken = function (): string {
   const token = crypto.randomBytes(20).toString('hex');
-  this.resetPasswordToken = crypto.createHash('sha256').update(token).digest('hex');
-  this.resetPasswordExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  (this as IUser).resetPasswordToken = crypto.createHash('sha256').update(token).digest('hex');
+  (this as IUser).resetPasswordExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
   return token;
 }
 
