@@ -1,4 +1,4 @@
-import { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
@@ -104,14 +104,10 @@ const userSchema = new Schema<IUser>({
   },
 });
 //
-userSchema.pre('save', function (next) {
+userSchema.pre('save', async function (next) {
   if(this.userName){
     this.userName = this.userName.toLowerCase().trim().replace(/\s/g, '');
   }
-  next();
-});
-//middleware to hash password before saving
-userSchema.pre('save', async function (next) {
   if(this.isModified('password')){
     this.password = await bcrypt.hash(this.password, 10);
   }
@@ -146,3 +142,6 @@ userSchema.methods.generateResetPasswordToken = function (): string {
   this.resetPasswordExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
   return token;
 }
+
+
+const User =  mongoose.model<IUser>('User', userSchema);
