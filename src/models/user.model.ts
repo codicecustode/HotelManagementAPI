@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 
-interface IUser extends Document {
+export interface IUser extends Document {
   userName: string;
   fullName: string;
   email: string;
@@ -56,6 +56,9 @@ const userSchema = new Schema<IUser>({
     select: false,
   },
   phone: {
+    type: String,
+  },
+  address: {
     type: String,
   },
   avtar: {
