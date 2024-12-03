@@ -37,6 +37,7 @@ const userSchema = new Schema<IUser>({
     required: [true, 'Username is required'],
     unique: true,
     trim: true,
+    index: true,
   },
   fullName: {
     type: String,
@@ -48,6 +49,7 @@ const userSchema = new Schema<IUser>({
     required:  [true, 'Email is required'],
     unique: true,
     trim: true,
+    index: true,
   },
   password: {
     type: String,
@@ -57,6 +59,8 @@ const userSchema = new Schema<IUser>({
   },
   phone: {
     type: String,
+    index: true,
+    unique: true,
   },
   address: {
     type: String,
@@ -147,4 +151,4 @@ userSchema.methods.generateResetPasswordToken = function (): string {
 }
 
 
-const User =  mongoose.model<IUser>('User', userSchema);
+export const User =  mongoose.model<IUser>('User', userSchema);
