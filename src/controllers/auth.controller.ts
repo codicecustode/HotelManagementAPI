@@ -41,7 +41,7 @@ export const registerUser = async (req: Request, res: Response) => {
       gender,
       dob,
       role,
-      avtar: req.file?.filename,
+      avtar: req.file? `uploads/${req.file.filename}` : 'avtar.png',
     });
 
     await user.save();
