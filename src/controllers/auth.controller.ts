@@ -70,6 +70,10 @@ const loginUser = async (req: Request, res: Response) => {
     return res.status(404).json({ message: 'User not found' });
   }
 
+  if(user.verified === false) {
+    return res.status(400).json({ message: 'User not verified' });
+  }
+
   if (userType === 'admin') {
     if (user.role !== 'admin') {
       return res.status(401).json({ message: 'Unauthorized user' });
@@ -96,7 +100,7 @@ const loginUser = async (req: Request, res: Response) => {
     { new: true },
   )
 
-  const token = user.generateAuthToken();
+  const accessToken = user.generateAuthToken();
   const refreshToken = user.generateRefrshToken();
 
   const options = {
@@ -105,8 +109,25 @@ const loginUser = async (req: Request, res: Response) => {
   };
 
   return res.status(200)
-    .cookie('token', token, options)
-    .json({ message: 'User logged in successfully', user: loggedUser });
+    .cookie('accessToken', accessToken, options)
+    .json({
+      message: 'User logged in successfully',
+      accessToken,
+      refreshToken,
+      result: {
+        id: user._id,
+        userName: user.userName,
+        name: user.fullName,
+        email: user.email,
+        phone: user.phone,
+        address: user.address,
+        avtar: user.avtar,
+        gender: user.gender,
+        role: user.role,
+        dob: user.dob,
+        status: user.status
+      },
+    });
 }
 
 export {
