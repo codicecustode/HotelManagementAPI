@@ -1,35 +1,9 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 
-export interface IUser extends Document {
-  userName: string;
-  fullName: string;
-  email: string;
-  password: string;
-  phone?: string;
-  avtar?: string;
-  gender?: 'male' | 'female';
-  dob: Date;
-  address: string;
-  role: 'user' | 'admin';
-  verified: boolean;
-  status: 'register' | 'login' | 'logout' | 'blocked';
-  resetPasswordToken?: string;
-  resetPasswordExpires?: Date;
-  emailVerificationToken?: string;
-  emailVerificationExpires?: Date;
-  createdAt: Date;
-  updatedAt: Date;
-
-  // Custom Methods
-  generateAuthToken(): string;
-  generateRefrshToken(): string;
-  generateEmailVerificationToken(): string;
-  generateResetPasswordToken(): string;
-  comparePassword(password: string): boolean;
-}
+import { IUser } from '../types/user.type';
 
 const userSchema = new Schema<IUser>({
   userName: {
