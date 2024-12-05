@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
 
 
-const sendEmail = async (email: string, subject: string, text: string, html: string) => {
+const sendEmail = async (email: string, subject: string, text: string, html: string): Promise<void> => {
   //connect to smtp server
   const transporter = nodemailer.createTransport({
     host: `process.env.SMTP_HOST`,
