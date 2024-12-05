@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
 
 
-const sendEmail = async (email: string, subject: string, text: string, html: string): Promise<void> => {
+const sendEmail = async (email: string, subject: string, title: string, text: string): Promise<void> => {
   //connect to smtp server
   const transporter = nodemailer.createTransport({
     host: `process.env.SMTP_HOST`,
@@ -13,11 +13,11 @@ const sendEmail = async (email: string, subject: string, text: string, html: str
   });
 
   const info = await transporter.sendMail({
-    from: `"Maddison Foo Koch 👻" <process.env.SMTP_FROM_EMAIL>`, // sender address
-    to: `email`, // list of receivers
-    subject: "Hello ✔", // Subject line
-    text: "Hello world?", // plain text body
-    html: "<b>Hello world?</b>", // html body
+    from: `"Maddison Foo Koch 👻" <${process.env.SMTP_FROM_EMAIL}>`, // sender address
+    to: email, // list of receivers
+    subject, // Subject line
+    text, // plain text body
+    html: `<p>${title}</p>`, // html body
   });
 }
 

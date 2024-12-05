@@ -1,6 +1,7 @@
 import { Request, Response, RequestHandler } from 'express';
-import { IUser } from '../models/user.model';
+import { IUser } from '../types/user.type';
 import { User } from '../models/user.model';
+import { sendEmail } from '../utils/send.email';
 const registerUser: RequestHandler = async (req: Request, res: Response) => {
   try {
     const {
@@ -133,11 +134,46 @@ const loginUser = async (req: Request, res: Response) => {
         status: user.status
       },
     });
+};
+
+const emailVerificationLink = async (req: Request, res: Response) => {
+  const { user } = req;
+
+  if(!user) {
+    return res.status(401).json({ message: 'User not found' });
+  }
+
+  if(user.verified === true) {
+    return res.status(400).json({ message: 'User already verified' });
+  }
+
+  const token = user.generateEmailVerificationToken();
+
+  const emailVerificationLink = `${process.env.CLIENT_URL}/auth/email-verification/${token}`;
+
+  const subject = 'User Email Verification';
+
+  const title = 'Email Verification';
+
+  const message = `Click on the link to verify your email: ${emailVerificationLink}`;
+
+  try {
+    await sendEmail(user.email, subject, title, message);
+    return res.status(200).json({ message: 'Email verification link sent' });
+  }catch(error: any) {
+    return res.status(500).json({ message: 'Internal Server Error', error: error.message });
+  }
+
 }
+
+
+
+
 
 export {
   registerUser,
-  loginUser
+  loginUser,
+  emailVerificationLink
 }
 
 
