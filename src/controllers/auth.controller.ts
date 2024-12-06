@@ -149,6 +149,8 @@ const emailVerificationLink = async (req: Request, res: Response) => {
 
   const token = user.generateEmailVerificationToken();
 
+  await user.save({ validateBeforeSave: false });
+
   const emailVerificationLink = `${process.env.CLIENT_URL}/auth/email-verification/${token}`;
 
   const subject = 'User Email Verification';
