@@ -20,7 +20,6 @@ const isUserAuthenticated = async (req: Request, res: Response, next: NextFuncti
     }
 
     if (user.status === 'blocked') {
-
       res.status(401).json({ message: 'User blocked' });
       return;
     }
