@@ -77,7 +77,7 @@ const registerUser: RequestHandler = async (req: Request, res: Response) => {
   }
 };
 
-const loginUser: RequestHandler  = async (req: Request, res: Response): Promise<void> => {
+const loginUser: RequestHandler = async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
   const { userType } = req.query;
 
@@ -160,7 +160,7 @@ const loginUser: RequestHandler  = async (req: Request, res: Response): Promise<
 };
 
 const logoutUser: RequestHandler = async (req: Request, res: Response) => {
-  
+
   try {
     const { user } = req;
 
@@ -176,12 +176,12 @@ const logoutUser: RequestHandler = async (req: Request, res: Response) => {
     );
 
     res
-    .clearCookie('accessToken')
-    .clearCookie('refreshToken')
-    .status(200)
-    .json({ 
-      message: 'User logged out successfully' 
-    });
+      .clearCookie('accessToken')
+      .clearCookie('refreshToken')
+      .status(200)
+      .json({
+        message: 'User logged out successfully'
+      });
     return;
   } catch (error: any) {
     res.status(500).json({ message: error.message });
@@ -217,7 +217,7 @@ const sendEmailVerificationLink: RequestHandler = async (req: Request, res: Resp
   await user.save({ validateBeforeSave: false });
 
   const emailVerificationLink = `${process.env.CLIENT_URL}/auth/email-verification/${emailVerificationToken}`;
-  
+
   const subject = 'User Email Verification from Nodemailer App';
 
   const text = 'Email Verification';
@@ -273,6 +273,33 @@ const verifyEmail: RequestHandler = async (req: Request, res: Response) => {
   }
 }
 
+const changePassword: RequestHandler = async (req: Request, res: Response) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    const { user } = req;
+
+    if (!oldPassword || !newPassword) {
+      res.status(400).json({ message: 'Old password and new password are required' });
+      return;
+    }
+
+    const isPasswordMatch = user.comparePassword(oldPassword);
+    if (!isPasswordMatch) {
+      res.status(401).json({ message: 'Invalid old password' });
+      return;
+    }
+
+    user.password = newPassword;
+    await user.save({ validateBeforeSave: false });
+
+    res.status(200).json({ message: 'Password changed successfully' });
+    return;
+  } catch (error: any) {
+    res.status(500).json({ message: 'Internal Server Error', error: error.message });
+    return;
+  }
+}
+
 const refreshAccessToken: RequestHandler = async (req: Request, res: Response) => {
 
   const cookieRefreshToken = req.cookies.refreshToken;
@@ -312,7 +339,8 @@ export {
   sendEmailVerificationLink,
   refreshAccessToken,
   verifyEmail,
-  logoutUser
+  logoutUser,
+  changePassword
 }
 
 
