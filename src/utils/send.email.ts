@@ -1,24 +1,24 @@
 import nodemailer from 'nodemailer';
 
 
-const sendEmail = async (email: string, subject: string, title: string, text: string): Promise<void> => {
-  //connect to smtp server
+const sendEmail = async (email: string, subject: string, text: string, htmlMessage: string): Promise<void> => {
+  
   const transporter = nodemailer.createTransport({
-    host: `process.env.SMTP_HOST`,
-    port: parseInt(process.env.SMTP_PORT as string),
+    service: `${process.env.GMAIL_SERVICE}`,
     auth: {
-        user: process.env.SMTP_USERNAME,
-        pass: process.env.SMTP_PASSWORD
-    }
+      user: `${process.env.GMAIL_USERNAME}`,
+      pass: `${process.env.GMAIL_PASSWORD}`,
+  }
   });
 
   const info = await transporter.sendMail({
     from: `"Maddison Foo Koch 👻" <${process.env.SMTP_FROM_EMAIL}>`, // sender address
-    to: email, // list of receivers
+    to: `${process.env.RECEIVER_MAIL}`, // list of receivers
     subject, // Subject line
     text, // plain text body
-    html: `<p>${title}</p>`, // html body
+    html: `<a>${htmlMessage}</a>`, // html body
   });
+  console.log('Message sent: %s', info.messageId);
 }
 
 export { sendEmail };
