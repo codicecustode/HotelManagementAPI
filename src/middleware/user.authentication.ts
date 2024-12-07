@@ -24,20 +24,21 @@ const isUserAuthenticated = async (req: Request, res: Response, next: NextFuncti
       res.status(401).json({ message: 'User blocked' });
       return;
     }
-    //   console.log(user.status);
-    //   if (user.status === 'login') {
-    //     console.log('not ok');
-    //     req.user = user;
-    //   }
-    // }
-    req.user = user;
+
+    if (user.status === 'logout') {
+      res.status(401).json({ message: 'User logged out' });
+      return;
+    }
+    if(user.verified !== false){
+      if (user.status === 'login') {
+        req.user = user;
+      }
+    }
   }
   catch (error) {
-    console.log(error);
     res.status(401).json({ message: 'Invalid token' });
     return;
   }
-  console.log(req.user);
   next();
 };
 
