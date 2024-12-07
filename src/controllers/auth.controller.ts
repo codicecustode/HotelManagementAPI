@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { IUser } from '../types/user.type';
 import { User } from '../models/user.model';
 import { sendEmail } from '../utils/send.email';
+
 const registerUser: RequestHandler = async (req: Request, res: Response) => {
   try {
     const {
@@ -76,37 +77,43 @@ const registerUser: RequestHandler = async (req: Request, res: Response) => {
   }
 };
 
-const loginUser = async (req: Request, res: Response) => {
+const loginUser: RequestHandler  = async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
   const { userType } = req.query;
 
   if (!email || !password) {
-    return res.status(400).json({ message: 'Email and password are required' });
+    res.status(400).json({ message: 'Email and password are required' });
+    return;
   }
 
   const user = await User.findOne({ email }).select('+password');
 
   if (!user) {
-    return res.status(404).json({ message: 'User not found' });
+    res.status(404).json({ message: 'User not found' });
+    return;
   }
 
   if (user.verified === false) {
-    return res.status(400).json({ message: 'User not verified' });
+    res.status(400).json({ message: 'User not verified' });
+    return;
   }
 
   if (userType === 'admin') {
     if (user.role !== 'admin') {
-      return res.status(401).json({ message: 'Unauthorized user' });
+      res.status(401).json({ message: 'Unauthorized user' });
+      return;
     }
   }
 
   if (user.status === 'blocked') {
-    return res.status(401).json({ message: 'User is blocked' });
+    res.status(401).json({ message: 'User is blocked' });
+    return;
   }
 
   const isPasswordMatch = user.comparePassword(password);
   if (!isPasswordMatch) {
-    return res.status(401).json({ message: 'Invalid password' });
+    res.status(401).json({ message: 'Invalid password' });
+    return;
   }
 
   const loggedUser = User.findByIdAndUpdate(
@@ -131,7 +138,7 @@ const loginUser = async (req: Request, res: Response) => {
     httpOnly: true,
   };
 
-  return res.status(200)
+  res.status(200)
     .cookie('accessToken', accessToken, options)
     .cookie('refreshToken', refreshToken, options)
     .json({
@@ -152,7 +159,7 @@ const loginUser = async (req: Request, res: Response) => {
     });
 };
 
-const logoutUser = async (req: Request, res: Response) => {
+const logoutUser: RequestHandler = async (req: Request, res: Response) => {
   
   try {
     const { user } = req;
@@ -182,7 +189,7 @@ const logoutUser = async (req: Request, res: Response) => {
   }
 }
 
-const sendEmailVerificationLink = async (req: Request, res: Response) => {
+const sendEmailVerificationLink: RequestHandler = async (req: Request, res: Response) => {
   const header = req.headers.authorization;
   const token = header && header.split(' ')[1];
 
@@ -231,7 +238,7 @@ const sendEmailVerificationLink = async (req: Request, res: Response) => {
 
 }
 
-const verifyEmail = async (req: Request, res: Response) => {
+const verifyEmail: RequestHandler = async (req: Request, res: Response) => {
   try {
     const { token } = req.params;
 
@@ -266,7 +273,7 @@ const verifyEmail = async (req: Request, res: Response) => {
   }
 }
 
-const refreshAccessToken = async (req: Request, res: Response) => {
+const refreshAccessToken: RequestHandler = async (req: Request, res: Response) => {
 
   const cookieRefreshToken = req.cookies.refreshToken;
 
