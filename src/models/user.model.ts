@@ -105,7 +105,7 @@ userSchema.methods.generateAuthToken = function (): string {
   return token;
 }
 
-userSchema.methods.generateRefrshToken = function (): string {
+userSchema.methods.generateRefreshToken = function (): string {
   const token = jwt.sign({ _id: this._id }, process.env.JWT_SECRET_KEY as string, { expiresIn: process.env.JWT_REFRESH_EXPIRES as string });
   return token;
 }
