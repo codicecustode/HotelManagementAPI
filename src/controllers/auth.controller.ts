@@ -1,5 +1,6 @@
 import { Request, Response, RequestHandler } from 'express';
 import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 import { IUser } from '../types/user.type';
 import { User } from '../models/user.model';
 import { sendEmail } from '../utils/send.email';
@@ -51,17 +52,16 @@ const registerUser: RequestHandler = async (req: Request, res: Response) => {
 
     await user.save();
 
-    const token = user.generateAuthToken();
+    const accessToken = user.generateAuthToken();
     const refreshToken = user.generateRefreshToken();
     const options = {
       expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       httpOnly: true,
     };
     res.status(200)
-      .cookie('token', token, options)
+      .cookie('accessToken', accessToken, options)
+      .cookie('refreshToken', refreshToken, options)
       .json({
-        token,
-        refreshToken,
         message: 'User created successfully',
         createdUser: user
       });
@@ -133,10 +133,9 @@ const loginUser = async (req: Request, res: Response) => {
 
   return res.status(200)
     .cookie('accessToken', accessToken, options)
+    .cookie('refreshToken', refreshToken, options)
     .json({
       message: 'User logged in successfully',
-      accessToken,
-      refreshToken,
       result: {
         id: user._id,
         userName: user.userName,
@@ -154,22 +153,33 @@ const loginUser = async (req: Request, res: Response) => {
 };
 
 const logoutUser = async (req: Request, res: Response) => {
+  
+  try {
+    const { user } = req;
 
-  const { user } = req;
+    if (!user) {
+      res.status(401).json({ message: 'User not found' });
+      return;
+    }
 
-  if (!user) {
-    res.status(401).json({ message: 'User not found' });
+    const loggedOutUser = User.findByIdAndUpdate(
+      user._id,
+      { status: 'logout' },
+      { new: true }
+    );
+
+    res
+    .clearCookie('accessToken')
+    .clearCookie('refreshToken')
+    .status(200)
+    .json({ 
+      message: 'User logged out successfully' 
+    });
+    return;
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
     return;
   }
-
-  const loggedOutUser = User.findByIdAndUpdate(
-    user._id,
-    { status: 'logout' },
-    { new: true }
-  );
-
-  res.status(200).json({ message: 'User logged out successfully' });
-  return;
 }
 
 const sendEmailVerificationLink = async (req: Request, res: Response) => {
@@ -181,7 +191,9 @@ const sendEmailVerificationLink = async (req: Request, res: Response) => {
     return;
   }
 
-  const user = await User.findOne({ _id: req.user._id });
+  const decodedToken = jwt.verify(token, process.env.JWT_SECRET_KEY as string);
+
+  const user = await User.findById((decodedToken as jwt.JwtPayload)._id);
 
   if (!user) {
     res.status(401).json({ message: 'User not found' });
@@ -194,11 +206,11 @@ const sendEmailVerificationLink = async (req: Request, res: Response) => {
   }
 
   const emailVerificationToken = user.generateEmailVerificationToken();
-  
+
   await user.save({ validateBeforeSave: false });
 
   const emailVerificationLink = `${process.env.CLIENT_URL}/auth/email-verification/${emailVerificationToken}`;
-
+  
   const subject = 'User Email Verification from Nodemailer App';
 
   const text = 'Email Verification';
@@ -243,6 +255,7 @@ const verifyEmail = async (req: Request, res: Response) => {
     user.verified = true;
     user.emailVerificationToken = undefined;
     user.emailVerificationExpires = undefined;
+    user.status = 'login';
     await user.save({ validateBeforeSave: false });
 
     res.status(200).json({ message: 'Email verified successfully' });
@@ -291,7 +304,8 @@ export {
   loginUser,
   sendEmailVerificationLink,
   refreshAccessToken,
-  verifyEmail
+  verifyEmail,
+  logoutUser
 }
 
 
