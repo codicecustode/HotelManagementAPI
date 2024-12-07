@@ -20,7 +20,7 @@ const registerUser: RequestHandler = async (req: Request, res: Response) => {
       res.status(400).json({ message: 'All fields are required' });
       return
     }
-
+    console.log(req.file);
     if (!req.file) {
       res.status(400).json({ message: 'Please upload an image' });
       return
@@ -50,14 +50,27 @@ const registerUser: RequestHandler = async (req: Request, res: Response) => {
 
     await user.save();
 
-    res.status(200).json({
-      message: 'User created successfully',
-      createdUser: user,
-    });
+    const token = user.generateAuthToken();
+    const refreshToken = user.generateRefreshToken();
+    const options = {
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      httpOnly: true,
+    };
+    res.status(200)
+      .cookie('token', token, options)
+      .json({
+        token,
+        refreshToken,
+        message: 'User created successfully',
+        createdUser: user
+      });
     return
   } catch (error: any) {
     res.status(500)
-      .json({ message: 'Internal Server Error', error: error.message });
+      .json({
+        message: 'Internal Server Error',
+        error: error.message
+      });
     return
   }
 };
@@ -107,7 +120,7 @@ const loginUser = async (req: Request, res: Response) => {
   )
 
   const accessToken = user.generateAuthToken();
-  const refreshToken = user.generateRefrshToken();
+  const refreshToken = user.generateRefreshToken();
 
   const options = {
     expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
@@ -136,15 +149,17 @@ const loginUser = async (req: Request, res: Response) => {
     });
 };
 
-const emailVerificationLink = async (req: Request, res: Response) => {
+const sendEmailVerificationLink = async (req: Request, res: Response) => {
   const { user } = req;
 
-  if(!user) {
-    return res.status(401).json({ message: 'User not found' });
+  if (!user) {
+    res.status(401).json({ message: 'User not found' });
+    return;
   }
 
-  if(user.verified === true) {
-    return res.status(400).json({ message: 'User already verified' });
+  if (user.verified === true) {
+    res.status(400).json({ message: 'User already verified' });
+    return;
   }
 
   const token = user.generateEmailVerificationToken();
@@ -153,20 +168,54 @@ const emailVerificationLink = async (req: Request, res: Response) => {
 
   const emailVerificationLink = `${process.env.CLIENT_URL}/auth/email-verification/${token}`;
 
-  const subject = 'User Email Verification';
+  const subject = 'User Email Verification from Nodemailer App';
 
-  const title = 'Email Verification';
+  const text = 'Email Verification';
 
-  const message = `Click on the link to verify your email: ${emailVerificationLink}`;
+  const htmlMessage = `
+    <p>This is a <b>User Verification mail</b> sent using Nodemailer.</p>
+    <p>Click here <a href="${emailVerificationLink}" target="_blank">${emailVerificationLink}</a> to verify email</p>
+  `;
 
   try {
-    await sendEmail(user.email, subject, title, message);
-    return res.status(200).json({ message: 'Email verification link sent' });
-  }catch(error: any) {
-    return res.status(500).json({ message: 'Internal Server Error', error: error.message });
+    await sendEmail(user.email, subject, text, htmlMessage);
+    res.status(200).json({ message: 'Email verification link sent' });
+    return;
+  } catch (error: any) {
+    res.status(500).json({ message: 'Internal Server Error', error: error.message });
+    return;
   }
 
 }
+
+const refreshAccessToken = async (req: Request, res: Response) => {
+
+  const cookieRefreshToken = req.cookies.refreshToken;
+
+  if (!cookieRefreshToken) {
+    res.status(401).json({ message: 'Access denied. No token provided' });
+    return;
+  }
+
+  const { user } = req;
+  const token = user.generateAuthToken();
+  const refreshToken = user.generateRefreshToken();
+
+  const options = {
+    expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    httpOnly: true,
+  };
+
+  res.status(200)
+    .cookie('refreshToken', refreshToken, options)
+    .json({
+      token,
+      message: 'Token refreshed successfully',
+    });
+  return;
+}
+
+
 
 
 
@@ -175,7 +224,8 @@ const emailVerificationLink = async (req: Request, res: Response) => {
 export {
   registerUser,
   loginUser,
-  emailVerificationLink
+  sendEmailVerificationLink,
+  refreshAccessToken
 }
 
 
