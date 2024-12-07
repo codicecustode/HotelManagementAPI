@@ -21,7 +21,7 @@ export interface IUser extends Document {
 
   // Custom Methods
   generateAuthToken(): string;
-  generateRefrshToken(): string;
+  generateRefreshToken(): string;
   generateEmailVerificationToken(): string;
   generateResetPasswordToken(): string;
   comparePassword(password: string): boolean;
