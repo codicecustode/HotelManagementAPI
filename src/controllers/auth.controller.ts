@@ -153,8 +153,35 @@ const loginUser = async (req: Request, res: Response) => {
     });
 };
 
-const sendEmailVerificationLink = async (req: Request, res: Response) => {
+const logoutUser = async (req: Request, res: Response) => {
+
   const { user } = req;
+
+  if (!user) {
+    res.status(401).json({ message: 'User not found' });
+    return;
+  }
+
+  const loggedOutUser = User.findByIdAndUpdate(
+    user._id,
+    { status: 'logout' },
+    { new: true }
+  );
+
+  res.status(200).json({ message: 'User logged out successfully' });
+  return;
+}
+
+const sendEmailVerificationLink = async (req: Request, res: Response) => {
+  const header = req.headers.authorization;
+  const token = header && header.split(' ')[1];
+
+  if (!token) {
+    res.status(401).json({ message: 'Access denied. No token provided for email verification' });
+    return;
+  }
+
+  const user = await User.findOne({ _id: req.user._id });
 
   if (!user) {
     res.status(401).json({ message: 'User not found' });
@@ -166,11 +193,11 @@ const sendEmailVerificationLink = async (req: Request, res: Response) => {
     return;
   }
 
-  const token = user.generateEmailVerificationToken();
+  const emailVerificationToken = user.generateEmailVerificationToken();
   
   await user.save({ validateBeforeSave: false });
 
-  const emailVerificationLink = `${process.env.CLIENT_URL}/auth/email-verification/${token}`;
+  const emailVerificationLink = `${process.env.CLIENT_URL}/auth/email-verification/${emailVerificationToken}`;
 
   const subject = 'User Email Verification from Nodemailer App';
 
