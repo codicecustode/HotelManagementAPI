@@ -3,7 +3,8 @@ import {
   registerUser,
   sendEmailVerificationLink,
   refreshAccessToken,
-  verifyEmail
+  verifyEmail,
+  logoutUser
  } from '../controllers/auth.controller';
 import { isUserAuthenticated, isRefreshTokenValid } from '../middleware/user.authentication';
 import upload from '../middleware/user.avtar.upload';
@@ -14,7 +15,7 @@ const router = express.Router();
 //test route
 
 router.route('/register').post(upload.single('avtar'), registerUser);
-
+router.route('/logout-user').post(isUserAuthenticated, logoutUser);
 
 
 router.route('/send-verification-email').post(isUserAuthenticated, sendEmailVerificationLink);
