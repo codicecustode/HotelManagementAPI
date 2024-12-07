@@ -1,4 +1,5 @@
 import { Request, Response, RequestHandler } from 'express';
+import crypto from 'crypto';
 import { IUser } from '../types/user.type';
 import { User } from '../models/user.model';
 import { sendEmail } from '../utils/send.email';
@@ -163,7 +164,7 @@ const sendEmailVerificationLink = async (req: Request, res: Response) => {
   }
 
   const token = user.generateEmailVerificationToken();
-
+  
   await user.save({ validateBeforeSave: false });
 
   const emailVerificationLink = `${process.env.CLIENT_URL}/auth/email-verification/${token}`;
@@ -186,6 +187,40 @@ const sendEmailVerificationLink = async (req: Request, res: Response) => {
     return;
   }
 
+}
+
+const verifyEmail = async (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+
+    if (!token) {
+      res.status(400).json({ message: 'token is required' });
+      return;
+    }
+
+    const emailVerificationToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await User.findOne({
+      emailVerificationToken,
+      emailVerificationExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      res.status(400).json({ message: 'Invalid or expired token' });
+      return;
+    }
+
+    user.verified = true;
+    user.emailVerificationToken = undefined;
+    user.emailVerificationExpires = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    res.status(200).json({ message: 'Email verified successfully' });
+    return;
+  } catch (error: any) {
+    res.status(500).json({ message: 'Internal Server Error', error: error.message });
+    return;
+  }
 }
 
 const refreshAccessToken = async (req: Request, res: Response) => {
@@ -225,7 +260,8 @@ export {
   registerUser,
   loginUser,
   sendEmailVerificationLink,
-  refreshAccessToken
+  refreshAccessToken,
+  verifyEmail
 }
 
 
