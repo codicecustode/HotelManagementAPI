@@ -30,7 +30,7 @@ router.route('/reset-password/:resetPasswordToken').post(isPasswordResetTokenVal
 
 
 router.route('/send-verification-email').post(isUserAuthenticated, sendEmailVerificationLink);
-router.route('/verify-email/:token').post(isUserAuthenticated, verifyEmail);
+router.route('/verify-email/:token').get(isUserAuthenticated, verifyEmail);
 
 
 router.route('/refresh-token').get(isRefreshTokenValid, refreshAccessToken);
