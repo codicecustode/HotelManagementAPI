@@ -97,7 +97,8 @@ userSchema.pre('save', async function (next) {
 
 //custom methods
 userSchema.methods.comparePassword = async function (password: string): Promise<boolean> {
-  return await bcrypt.compare(password, this.password);
+  const user = await mongoose.model('User').findById(this._id).select('+password');
+  return await bcrypt.compare(password, user?.password);
 }
 
 userSchema.methods.generateAuthToken = function (): string {
