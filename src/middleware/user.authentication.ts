@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/user.model'; // Adjust the path as necessary
+import crypto from 'crypto';
 
 const isUserAuthenticated = async (req: Request, res: Response, next: NextFunction) => {
 
@@ -65,9 +66,35 @@ const isRefreshTokenValid = async (req: Request, res: Response, next: NextFuncti
   next();
 }
 
+const isPasswordResetTokenValid = async (req: Request, res: Response, next: NextFunction) => {
+  const token = req.params.resetPasswordToken;
+  if (!token) {
+    res.status(401).json({ message: 'Access denied. No token provided for restting the password' });
+    return;
+  }
+  const resetPasswordToken =  crypto.createHash('sha256').update(token).digest('hex');
+  try {
+    const user = await User.findOne({
+      resetPasswordToken,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+    
+    if (!user) {
+      res.status(401).json({ message: 'Invalid token or token expired' });
+      return;
+    }
+
+    req.user = user;
+    next();
+  } catch (error) {
+    res.status(401).json({ message: 'Invalid token' });
+    return;
+  }
+}
 
 
 export {
   isUserAuthenticated,
-  isRefreshTokenValid
+  isRefreshTokenValid,
+  isPasswordResetTokenValid
 };
