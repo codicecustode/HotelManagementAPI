@@ -18,7 +18,7 @@ export interface IUser extends Document {
   emailVerificationExpires?: Date;
   createdAt: Date;
   updatedAt: Date;
-
+  
   // Custom Methods
   generateAuthToken(): string;
   generateRefreshToken(): string;
