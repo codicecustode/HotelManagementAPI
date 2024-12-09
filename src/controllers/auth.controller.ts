@@ -229,7 +229,10 @@ const sendEmailVerificationLink: RequestHandler = async (req: Request, res: Resp
 
   try {
     await sendEmail(user.email, subject, text, htmlMessage);
-    res.status(200).json({ message: 'Email verification link sent' });
+    res.status(200).json({
+      emailVerificationToken,
+      message: 'Email verification link sent'
+    });
     return;
   } catch (error: any) {
     res.status(500).json({ message: 'Internal Server Error', error: error.message });
@@ -282,21 +285,96 @@ const changePassword: RequestHandler = async (req: Request, res: Response) => {
       res.status(400).json({ message: 'Old password and new password are required' });
       return;
     }
-
-    const isPasswordMatch = user.comparePassword(oldPassword);
+    const isPasswordMatch = await user.comparePassword(oldPassword);
     if (!isPasswordMatch) {
       res.status(401).json({ message: 'Invalid old password' });
       return;
     }
 
     user.password = newPassword;
-    await user.save({ validateBeforeSave: false });
+    try {
+      await user.save({ validateBeforeSave: false });
+    } catch (error: any) {
+      res.status(500).json({ message: 'Internal Server Error while changing the password', error: error.message });
+      return;
+    }
 
     res.status(200).json({ message: 'Password changed successfully' });
     return;
   } catch (error: any) {
     res.status(500).json({ message: 'Internal Server Error', error: error.message });
     return;
+  }
+}
+
+const forgotPassword: RequestHandler = async (req: Request, res: Response) => {
+
+  try {
+    const { email, phone, username } = req.body;
+    if (!email && !phone && !username) {
+      res.status(400).json({ message: 'Email, phone or username is required' });
+      return;
+    }
+
+    const user = await User.findOne({
+      $or: [{ email }, { phone }, { userName: username }],
+    });
+
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    const resetPasswordToken = user.generateResetPasswordToken();
+    await user.save({ validateBeforeSave: false });
+
+    const resetPasswordLink = `${process.env.CLIENT_URL}/auth/reset-password/${resetPasswordToken}`;
+
+    const subject = 'User Password Reset from Nodemailer App';
+
+    const text = 'Password Reset';
+
+    const htmlMessage = `
+      <p>This is a <b>Password Reset mail</b> sent using Nodemailer.</p>
+      <p>Click here <a href="${resetPasswordLink}" target="_blank">${resetPasswordLink}</a> to reset password</p>
+    `;
+    await sendEmail(user.email, subject, text, htmlMessage);
+
+    res.status(200).json({
+      resetPasswordToken,
+      message: 'Password reset link sent'
+    });
+  } catch (error: any) {
+    res.status(500).json({ message: 'Internal Server Error', error: error.message });
+  }
+}
+
+const resetPassword: RequestHandler = async (req: Request, res: Response) => {
+  const { user } = req;
+  if (!user) {
+    res.status(401).json({ message: 'User not found while resetting the password' });
+    return;
+  }
+
+  const { newPassword, newConfirmPassword } = req.body;
+  if (newPassword !== newConfirmPassword) {
+    res.status(400).json({ message: 'Passwords do not match with conform password' });
+    return;
+  }
+
+  if (!newPassword) {
+    res.status(400).json({ message: 'New password is required' });
+    return;
+  }
+
+  try {
+    user.password = newPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save({ validateBeforeSave: false });
+    res.status(200).json({ message: 'Password reset successfully' });
+  } catch (error: any) {
+    res.status(500).json({ message: 'Internal Server Error while resetting the password', error: error.message });
   }
 }
 
@@ -340,7 +418,9 @@ export {
   refreshAccessToken,
   verifyEmail,
   logoutUser,
-  changePassword
+  changePassword,
+  forgotPassword,
+  resetPassword
 }
 
 
