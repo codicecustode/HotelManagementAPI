@@ -44,7 +44,7 @@ const roomSchema = new Schema<IRoom>({
     type: [String],
     required: [true, 'Extra facilities are required']
   },
-  petAllowed: {
+  isPetAllowed: {
     type: Boolean,
     default: false,
   },
@@ -52,11 +52,11 @@ const roomSchema = new Schema<IRoom>({
     type: Boolean,
     default: false,
   },
-  breakfast: {
+  isBreakfastProvide: {
     type: Boolean,
     default: false,
   },
-  airConditioned: {
+  isAirConditioned: {
     type: Boolean,
     default: false
   },
