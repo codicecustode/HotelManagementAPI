@@ -9,10 +9,10 @@ export interface IRoom extends Document {
   roomImages: { url: string }[];
   roomStatus: 'available' | 'booked' | 'maintenance';
   extraFacilities: string[];
-  petAllowed: boolean;
+  isPetAllowed: boolean;
   isFeatured: boolean;
-  breakfast: boolean;
-  airConditioned: boolean;
+  isBreakfastProvide: boolean;
+  isAirConditioned: boolean;
   createdBy: Object;
   createdAt: Date;
   updatedAt: Date;
