@@ -92,6 +92,28 @@ const isPasswordResetTokenValid = async (req: Request, res: Response, next: Next
   }
 }
 
+const isUserAdmin = async(req: Request, res: Response, next:NextFunction) => {
+  try{
+    const { user } = req;
+    if(!user){
+      res.status(401).json({message: 'Access denied. No token provided'});
+      return;
+    }
+    if(user.role !== 'admin'){
+      res.status(403).json({message: 'Access denied. Admin only'});
+      return;
+    }
+    next();
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error('Error in isUserAdmin middleware:', error.message);
+    } else {
+      console.error('Unknown error in isUserAdmin middleware');
+    }
+    res.status(500).json({ message: 'Internal server error' });
+  }
+
+}
 
 export {
   isUserAuthenticated,
