@@ -116,6 +116,7 @@ const isUserAdmin = async(req: Request, res: Response, next:NextFunction) => {
 }
 
 export {
+  isUserAdmin,
   isUserAuthenticated,
   isRefreshTokenValid,
   isPasswordResetTokenValid
