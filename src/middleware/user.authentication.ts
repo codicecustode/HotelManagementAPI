@@ -103,6 +103,7 @@ const isUserAdmin = async(req: Request, res: Response, next:NextFunction) => {
       res.status(403).json({message: 'Access denied. Admin only'});
       return;
     }
+    console.log(user.role);
     next();
   } catch (error: unknown) {
     if (error instanceof Error) {
