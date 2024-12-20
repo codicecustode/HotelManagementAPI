@@ -1,4 +1,4 @@
-class MyQueryHelper{
+export class MyQueryHelper{
   private query: any;
   private queryStr: any;
 
